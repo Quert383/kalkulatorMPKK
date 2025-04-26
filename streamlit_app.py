@@ -42,7 +42,7 @@ st.header("Podaj kwotę kredytu", divider="gray")
 st.markdown(
     """
     Kwota kredytu musi mieścić się w przedziale **od 0 do 255&nbsp;550 złotych**.
-    <br>Możesz wpisać: <code>100000</code>, <code>100.000</code>, <code>240000,12</code>, <code>240.000,12</code> itp.
+    <br>Możesz wpisać w formacie: <code>100000</code>, <code>100.000</code>, <code>240000,12</code>, <code>240.000,12</code> itp.
     """, unsafe_allow_html=True
 )
 kwota_str = st.text_input("Kwota kredytu:", value="", key="kwota")
@@ -158,7 +158,7 @@ st.markdown(
         Kalkulator nie stanowi porady prawnej.<br>
         W razie wątpliwości skonsultuj się z prawnikiem lub doradcą finansowym.<br>
         <br>
-        <span style='font-size:0.85rem;'>Made by Hubert Domański BCP LAW ® 2025</span>
+        <span style='font-size:0.85rem;'>Designed by Hubert Domański BCP LAW ® 2025</span>
     </div>
     """, unsafe_allow_html=True
 )
