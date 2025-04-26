@@ -158,7 +158,7 @@ st.markdown(
         Kalkulator nie stanowi porady prawnej.<br>
         W razie wątpliwości skonsultuj się z prawnikiem lub doradcą finansowym.<br>
         <br>
-        <span style='font-size:0.85rem;'>Made by Hubert Domański ® BCP LAW 2025</span>
+        <span style='font-size:0.85rem;'>Made by Hubert Domański BCP LAW ® 2025</span>
     </div>
     """, unsafe_allow_html=True
 )
