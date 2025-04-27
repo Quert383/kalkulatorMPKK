@@ -19,9 +19,6 @@ st.markdown(
 )
 st.divider()
 
-# Pasek postępu
-progress_bar = st.progress(0)
-
 # --- 1. Termin zawarcia umowy
 st.header("Wybierz termin zawarcia umowy kredytu", divider="gray")
 terminy = [
@@ -38,8 +35,6 @@ choice_idx = st.radio(
     key="termin"
 )
 choice = str(choice_idx + 1)
-
-progress_bar.progress(15)
 
 # Informacja o starszych umowach
 st.warning(
@@ -68,8 +63,6 @@ kredyt = st.selectbox(
     options=rodzaje_kredytu,
     key="rodzaj"
 )
-
-progress_bar.progress(30)
 
 if kredyt in ["🏡 Kredyt hipoteczny", "🚗 Leasing bez obowiązku nabycia przedmiotu przez konsumenta"]:
     st.error("Wybrany rodzaj kredytu **nie kwalifikuje się** do wyliczenia MPKK zgodnie z aktualnymi przepisami.")
@@ -112,8 +105,6 @@ if kwota_str:
         st.error("Podaj poprawną kwotę kredytu zgodną z limitem.")
         st.stop()
 
-progress_bar.progress(50)
-
 st.divider()
 
 # --- 4. Okres spłaty
@@ -131,8 +122,6 @@ else:
     n = st.number_input("Okres spłaty (dni):", min_value=1, step=1, key="dni")
 
 R = 365
-
-progress_bar.progress(70)
 
 st.divider()
 
@@ -182,8 +171,6 @@ if st.button("Oblicz MPKK"):
         limit = K * 0.45
 
     MPKK = min(mpkk_wzor, limit)
-
-    progress_bar.progress(100)
 
     st.success(f"**Obliczona maksymalna wysokość pozaodsetkowych kosztów kredytu:** {format_pln(MPKK)} zł")
     st.write(f"**Użyty wzór:** {formula}")
