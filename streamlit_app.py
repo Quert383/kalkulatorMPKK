@@ -1,5 +1,7 @@
 import streamlit as st
+import time
 
+# Konfiguracja strony
 st.set_page_config(
     page_title="Kalkulator MPKK | BCP LAW",
     page_icon="logo_bcp.png",
@@ -15,10 +17,12 @@ st.markdown(
     "</div>",
     unsafe_allow_html=True
 )
-
 st.divider()
 
-# Termin zawarcia umowy
+# Pasek postępu
+progress_bar = st.progress(0)
+
+# --- 1. Termin zawarcia umowy
 st.header("Wybierz termin zawarcia umowy kredytu", divider="gray")
 terminy = [
     "11.03.2016 - 30.03.2020",
@@ -35,14 +39,51 @@ choice_idx = st.radio(
 )
 choice = str(choice_idx + 1)
 
+progress_bar.progress(15)
+
+# Informacja o starszych umowach
+st.warning(
+    "Jeśli umowa została zawarta **przed 11 marca 2016 roku**, "
+    "ale **po 18 grudnia 2011 roku**, "
+    "możliwe jest zastosowanie SKD. Skontaktuj się z nami w celu indywidualnej analizy."
+)
+
 st.divider()
 
-# Kwota kredytu
+# --- 2. Rodzaj kredytu
+st.header("Wybierz rodzaj kredytu", divider="gray")
+rodzaje_kredytu = [
+    "🧾 Kredyt konsumencki",
+    "💸 Umowa pożyczki",
+    "💳 Kredyt odnawialny",
+    "🏦 Kredyt w rozumieniu prawa bankowego",
+    "🛠️ Kredyt niezabezpieczony hipoteką przeznaczony na remont nieruchomości",
+    "🤝 Kredyt polegający na zaciągnięciu zobowiązania wobec osoby trzeciej z obowiązkiem zwrotu kredytodawcy określonego świadczenia",
+    "⏳ Umowa o odroczeniu terminu spełnienia świadczenia pieniężnego",
+    "🏡 Kredyt hipoteczny",
+    "🚗 Leasing bez obowiązku nabycia przedmiotu przez konsumenta",
+]
+kredyt = st.selectbox(
+    label="Rodzaj kredytu:",
+    options=rodzaje_kredytu,
+    key="rodzaj"
+)
+
+progress_bar.progress(30)
+
+if kredyt in ["🏡 Kredyt hipoteczny", "🚗 Leasing bez obowiązku nabycia przedmiotu przez konsumenta"]:
+    st.error("Wybrany rodzaj kredytu **nie kwalifikuje się** do wyliczenia MPKK zgodnie z aktualnymi przepisami.")
+    st.stop()
+
+st.divider()
+
+# --- 3. Kwota kredytu
 st.header("Podaj kwotę kredytu", divider="gray")
 st.markdown(
     """
-    Kwota kredytu musi mieścić się w przedziale **od 0 do 255&nbsp;550 złotych**.
-    <br>Możesz wpisać w formacie: <code>100000</code>, <code>100.000</code>, <code>240000,12</code>, <code>240.000,12</code> itp.
+    Kwota kredytu musi mieścić się w przedziale **od 0 do 255&nbsp;550 złotych**,
+    chyba że wybrałeś kredyt na remont nieruchomości **(wtedy limit nie obowiązuje)**.
+    <br>Możesz wpisać w formacie: <code>100000</code>, <code>100.000</code>, <code>240000,12</code> itp.
     """, unsafe_allow_html=True
 )
 kwota_str = st.text_input("Kwota kredytu:", value="", key="kwota")
@@ -61,95 +102,99 @@ def parse_amount(amount_str):
     except ValueError:
         return None
 
-K = parse_amount(kwota_str) if kwota_str else None
-
 def format_pln(amount):
     return f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
+K = parse_amount(kwota_str) if kwota_str else None
+
 if kwota_str:
-    if K is None or K < 0 or K > 255550:
-        st.error("Podaj poprawną kwotę kredytu z zakresu od 0 do 255 550 zł.")
-    else:
-        st.divider()
-        # Okres spłaty
-        st.header("Podaj okres spłaty", divider="gray")
-        st.info(
-            "Rekomendacja: dla największej precyzji zalecamy wpisywanie okresu spłaty w dniach. "
-            "Liczba dni w poszczególnych miesiącach różni się, dlatego podanie okresu w miesiącach może powodować niewielkie rozbieżności w wyniku."
-        )
+    if K is None or K < 0 or (K > 255550 and kredyt != "🛠️ Kredyt niezabezpieczony hipoteką przeznaczony na remont nieruchomości"):
+        st.error("Podaj poprawną kwotę kredytu zgodną z limitem.")
+        st.stop()
 
-        input_type = st.radio("Wybierz sposób podania okresu spłaty:", ("W miesiącach", "W dniach"), key="okres")
-        if input_type == "W miesiącach":
-            months = st.number_input("Okres spłaty (miesiące):", min_value=1, step=1, key="miesiace")
-            n = months * 30.42
-        else:
-            n = st.number_input("Okres spłaty (dni):", min_value=1, step=1, key="dni")
+progress_bar.progress(50)
 
-        R = 365
+st.divider()
 
-        st.divider()
-        st.header("Wynik i wzór MPKK", divider="gray")
+# --- 4. Okres spłaty
+st.header("Podaj okres spłaty", divider="gray")
+st.info(
+    "Rekomendacja: dla największej precyzji zalecamy wpisywanie okresu spłaty w dniach. "
+    "Liczba dni w poszczególnych miesiącach różni się, dlatego podanie okresu w miesiącach może powodować niewielkie rozbieżności w wyniku."
+)
+input_type = st.radio("Wybierz sposób podania okresu spłaty:", ("W miesiącach", "W dniach"), key="okres")
 
-        # Opisy wzorów
-        if choice == "1":
-            st.info("**Wybrano wzór:**\n"
-                    "MPKK = (K × 25%) + (K × n/R × 30%)\n"
-                    "Maksymalna wysokość MPKK = całkowita kwota kredytu")
-            limit_info = "maksymalna wysokość MPKK = całkowita kwota kredytu"
-        elif choice == "2":
-            st.info("""**Wybrano wzór:**  
+if input_type == "W miesiącach":
+    months = st.number_input("Okres spłaty (miesiące):", min_value=1, step=1, key="miesiace")
+    n = months * 30.42
+else:
+    n = st.number_input("Okres spłaty (dni):", min_value=1, step=1, key="dni")
+
+R = 365
+
+progress_bar.progress(70)
+
+st.divider()
+
+# --- 5. Wzór i wyliczenia
+st.header("Wzór MPKK", divider="gray")
+if choice == "1":
+    st.info("**Wybrano wzór:**\nMPKK = (K × 25%) + (K × n/R × 30%)\nMaksymalna wysokość MPKK = całkowita kwota kredytu")
+    limit_info = "maksymalna wysokość MPKK = całkowita kwota kredytu"
+elif choice == "2":
+    st.info("""**Wybrano wzór:**  
 - Dla okresu **krótszego niż 30 dni**: MPKK = K × 5%  
 - Dla okresu **równego lub dłuższego niż 30 dni**: MPKK = (K × 15%) + (K × n/R × 6%)  
 Maksymalna wysokość MPKK = 45% całkowitej kwoty kredytu""")
-            limit_info = "maksymalna wysokość MPKK = 45% całkowitej kwoty kredytu"
-        elif choice == "3":
-            st.info("**Wybrano wzór:**\n"
-                    "MPKK = (K × 25%) + (K × n/R × 30%)\n"
-                    "Maksymalna wysokość MPKK = całkowita kwota kredytu")
-            limit_info = "maksymalna wysokość MPKK = całkowita kwota kredytu"
-        elif choice == "4":
-            st.info("""**Wybrano wzór:**  
+    limit_info = "maksymalna wysokość MPKK = 45% całkowitej kwoty kredytu"
+elif choice == "3":
+    st.info("**Wybrano wzór:**\nMPKK = (K × 25%) + (K × n/R × 30%)\nMaksymalna wysokość MPKK = całkowita kwota kredytu")
+    limit_info = "maksymalna wysokość MPKK = całkowita kwota kredytu"
+elif choice == "4":
+    st.info("""**Wybrano wzór:**  
 - Dla okresu **krótszego niż 30 dni**: MPKK = K × 5%  
 - Dla okresu **równego lub dłuższego niż 30 dni**: MPKK = (K × 10%) + (K × n/R × 10%)  
 Maksymalna wysokość MPKK = 45% całkowitej kwoty kredytu""")
-            limit_info = "maksymalna wysokość MPKK = 45% całkowitej kwoty kredytu"
+    limit_info = "maksymalna wysokość MPKK = 45% całkowitej kwoty kredytu"
 
-        if st.button("Oblicz MPKK"):
-            is_short_term = n < 30
+if st.button("Oblicz MPKK"):
+    is_short_term = n < 30
 
-            if choice in ["1", "3"]:
-                mpkk_wzor = (K * 0.25) + (K * n / R * 0.30)
-                formula = "MPKK = (K × 25%) + (K × n/R × 30%)"
-                limit = K
-            elif choice == "2":
-                if is_short_term:
-                    mpkk_wzor = K * 0.05
-                    formula = "MPKK = K × 5% (dla okresu krótszego niż 30 dni)"
-                else:
-                    mpkk_wzor = (K * 0.15) + (K * n / R * 0.06)
-                    formula = "MPKK = (K × 15%) + (K × n/R × 6%) (dla okresu równego lub dłuższego niż 30 dni)"
-                limit = K * 0.45
-            elif choice == "4":
-                if is_short_term:
-                    mpkk_wzor = K * 0.05
-                    formula = "MPKK = K × 5% (dla okresu krótszego niż 30 dni)"
-                else:
-                    mpkk_wzor = (K * 0.10) + (K * n / R * 0.10)
-                    formula = "MPKK = (K × 10%) + (K × n/R × 10%) (dla okresu równego lub dłuższego niż 30 dni)"
-                limit = K * 0.45
+    if choice in ["1", "3"]:
+        mpkk_wzor = (K * 0.25) + (K * n / R * 0.30)
+        formula = "MPKK = (K × 25%) + (K × n/R × 30%)"
+        limit = K
+    elif choice == "2":
+        if is_short_term:
+            mpkk_wzor = K * 0.05
+            formula = "MPKK = K × 5% (dla okresu krótszego niż 30 dni)"
+        else:
+            mpkk_wzor = (K * 0.15) + (K * n / R * 0.06)
+            formula = "MPKK = (K × 15%) + (K × n/R × 6%) (dla okresu równego lub dłuższego niż 30 dni)"
+        limit = K * 0.45
+    elif choice == "4":
+        if is_short_term:
+            mpkk_wzor = K * 0.05
+            formula = "MPKK = K × 5% (dla okresu krótszego niż 30 dni)"
+        else:
+            mpkk_wzor = (K * 0.10) + (K * n / R * 0.10)
+            formula = "MPKK = (K × 10%) + (K × n/R × 10%) (dla okresu równego lub dłuższego niż 30 dni)"
+        limit = K * 0.45
 
-            MPKK = min(mpkk_wzor, limit)
+    MPKK = min(mpkk_wzor, limit)
 
-            st.success(f"**Obliczona maksymalna wysokość pozaodsetkowych kosztów kredytu:** {format_pln(MPKK)} zł")
-            st.write(f"**Użyty wzór:** {formula}")
-            st.write(f"**Wynik MPKK według wzoru:** {format_pln(mpkk_wzor)} zł")
+    progress_bar.progress(100)
 
-            if mpkk_wzor > limit:
-                st.warning(
-                    f"MPKK według wzoru przekracza limit, {limit_info}. Limit wynosi: {format_pln(limit)} zł"
-                )
-            else:
-                st.info("MPKK według wzoru mieści się w ustawowym limicie.")
+    st.success(f"**Obliczona maksymalna wysokość pozaodsetkowych kosztów kredytu:** {format_pln(MPKK)} zł")
+    st.write(f"**Użyty wzór:** {formula}")
+    st.write(f"**Wynik MPKK według wzoru:** {format_pln(mpkk_wzor)} zł")
+
+    if mpkk_wzor > limit:
+        st.warning(
+            f"MPKK według wzoru przekracza limit, {limit_info}. Limit wynosi: {format_pln(limit)} zł"
+        )
+    else:
+        st.info("MPKK według wzoru mieści się w ustawowym limicie.")
 
 st.divider()
 st.markdown(
