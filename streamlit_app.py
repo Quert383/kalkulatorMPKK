@@ -11,9 +11,9 @@ st.set_page_config(
 # Logo i nagłówek
 st.image("logo_bcp.png", width=180)
 st.markdown(
-    "<h1 style='margin-bottom:0.2em;'>Kalkulator MPKK</h1>"
+    "<h1 style='margin-bottom:0.2em;'>Kwalifikacja do SKD wraz z kalkulatorem MPKK</h1>"
     "<div style='color:#333; font-size:1.1rem; margin-bottom:1em;'>"
-    "Oblicz maksymalne pozaodsetkowe koszty kredytu konsumenckiego według aktualnych przepisów."
+    "Sprawdź czy Twój kredyt się kwalifikuję oraz oblicz maksymalne pozaodsetkowe koszty kredytu konsumenckiego według aktualnych przepisów."
     "</div>",
     unsafe_allow_html=True
 )
@@ -47,7 +47,9 @@ st.divider()
 
 # --- 2. Rodzaj kredytu
 st.header("Wybierz rodzaj kredytu", divider="gray")
-rodzaje_kredytu = [
+
+# Lista wszystkich możliwych rodzajów
+rodzaje_kredytu_all = [
     "🧾 Kredyt konsumencki",
     "💸 Umowa pożyczki",
     "💳 Kredyt odnawialny",
@@ -58,17 +60,28 @@ rodzaje_kredytu = [
     "🏡 Kredyt hipoteczny",
     "🚗 Leasing bez obowiązku nabycia przedmiotu przez konsumenta",
 ]
+
+# Dynamiczna modyfikacja dostępnych opcji w zależności od wyboru terminu
+rodzaje_kredytu = rodzaje_kredytu_all.copy()
+
+if choice == "1":
+    # Usuń "kredyt na remont" jeśli termin to 11.03.2016 - 30.03.2020
+    rodzaje_kredytu = [r for r in rodzaje_kredytu if r != "🛠️ Kredyt niezabezpieczony hipoteką przeznaczony na remont nieruchomości"]
+
 kredyt = st.selectbox(
     label="Rodzaj kredytu:",
     options=rodzaje_kredytu,
     key="rodzaj"
 )
 
+# Obsługa typów kredytów niekwalifikujących się + Tryb konsultacyjny
 if kredyt in ["🏡 Kredyt hipoteczny", "🚗 Leasing bez obowiązku nabycia przedmiotu przez konsumenta"]:
-    st.error("Wybrany rodzaj kredytu **nie kwalifikuje się** do wyliczenia MPKK zgodnie z aktualnymi przepisami.")
+    st.warning(
+        "**Twoja sprawa może wymagać indywidualnej analizy.** "
+        "Wybrany rodzaj kredytu nie kwalifikuje się do standardowego wyliczenia MPKK. "
+        "Skontaktuj się z prawnikiem lub doradcą finansowym."
+    )
     st.stop()
-
-st.divider()
 
 # --- 3. Kwota kredytu
 st.header("Podaj kwotę kredytu", divider="gray")
@@ -113,15 +126,38 @@ st.info(
     "Rekomendacja: dla największej precyzji zalecamy wpisywanie okresu spłaty w dniach. "
     "Liczba dni w poszczególnych miesiącach różni się, dlatego podanie okresu w miesiącach może powodować niewielkie rozbieżności w wyniku."
 )
+
 input_type = st.radio("Wybierz sposób podania okresu spłaty:", ("W miesiącach", "W dniach"), key="okres")
 
-if input_type == "W miesiącach":
-    months = st.number_input("Okres spłaty (miesiące):", min_value=1, step=1, key="miesiace")
-    n = months * 30.42
-else:
-    n = st.number_input("Okres spłaty (dni):", min_value=1, step=1, key="dni")
+with st.expander("⚙️ Opcjonalnie: Ustawienia liczby dni w roku i miesiącu"):
+    st.markdown(
+        """
+        Domyślnie rok przyjmowany jest jako **365 dni**, a miesiąc jako **30,42 dnia**.  
+        Jeśli Twoja umowa wskazuje inne wartości (np. rok = 360 dni, miesiąc = 30 dni), możesz je zmienić tutaj.
+        """
+    )
+    col1, col2 = st.columns(2)
+    with col1:
+        days_in_year = st.number_input("Liczba dni w roku:", min_value=1, max_value=400, value=365, step=1, key="dni_rok")
+    with col2:
+        days_in_month = st.number_input("Liczba dni w miesiącu:", min_value=1.0, max_value=31.0, value=30.42, step=0.01, key="dni_miesiac")
 
-R = 365
+# Walidacja wartości roku i miesiąca
+if days_in_year < 300 or days_in_year > 400:
+    st.warning(f"⚠️ Wybrałeś nietypową liczbę dni w roku: {days_in_year} dni. Standardowo przyjmuje się 365.")
+
+if days_in_month < 25 or days_in_month > 31:
+    st.warning(f"⚠️ Wybrałeś nietypową liczbę dni w miesiącu: {days_in_month:.2f} dni. Standardowo przyjmuje się 30,42.")
+
+# Wyliczanie okresu n
+if input_type == "W miesiącach":
+    months = st.number_input("Okres spłaty (w miesiącach):", min_value=1, step=1, key="miesiace")
+    n = months * days_in_month
+else:
+    n = st.number_input("Okres spłaty (w dniach):", min_value=1, step=1, key="dni")
+
+# Rok do wzoru
+R = days_in_year
 
 st.divider()
 
