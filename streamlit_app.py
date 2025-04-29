@@ -9,7 +9,7 @@ st.set_page_config(
 )
 
 # Logo i nagłówek
-st.image("logo_bcp.png", width=180)
+st.image("Salutaris_logo.png", width=180)
 st.markdown(
     "<h1 style='margin-bottom:0.2em;'>Kwalifikacja do SKD wraz z kalkulatorem MPKK</h1>"
     "<div style='color:#333; font-size:1.1rem; margin-bottom:1em;'>"
