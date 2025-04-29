@@ -9,7 +9,19 @@ st.set_page_config(
 )
 
 # Logo i nagłówek
-st.image("Salutaris_logo.png", width=180)
+with open("logo_bcp.png", "rb") as f:
+    logo_data = f.read()
+import base64
+encoded_logo = base64.b64encode(logo_data).decode()
+
+st.markdown(
+    f"""
+    <div style='text-align: center;'>
+        <img src='data:image/png;base64,{encoded_logo}' style='width:300px;' />
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.markdown(
     "<h1 style='margin-bottom:0.2em;'>Kwalifikacja do SKD wraz z kalkulatorem MPKK</h1>"
     "<div style='color:#333; font-size:1.1rem; margin-bottom:1em;'>"
