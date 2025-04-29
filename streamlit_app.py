@@ -4,12 +4,12 @@ import time
 # Konfiguracja strony
 st.set_page_config(
     page_title="Kalkulator MPKK | Salutaris Polska",
-    page_icon="logo_bcp.png",
+    page_icon="Salutaris_logo.png",
     layout="centered"
 )
 
 # Logo i nagłówek
-with open("logo_bcp.png", "rb") as f:
+with open("Salutaris_logo.png", "rb") as f:
     logo_data = f.read()
 import base64
 encoded_logo = base64.b64encode(logo_data).decode()
