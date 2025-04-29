@@ -3,7 +3,7 @@ import time
 
 # Konfiguracja strony
 st.set_page_config(
-    page_title="Kalkulator MPKK | BCP LAW",
+    page_title="Kalkulator MPKK | Salutaris Polska",
     page_icon="logo_bcp.png",
     layout="centered"
 )
@@ -226,7 +226,7 @@ st.markdown(
         Kalkulator nie stanowi porady prawnej.<br>
         W razie wątpliwości skonsultuj się z prawnikiem lub doradcą finansowym.<br>
         <br>
-        <span style='font-size:0.85rem;'>Designed by Hubert Domański BCP LAW ® 2025</span>
+        <span style='font-size:0.85rem;'>Designed by Hubert Domański Salutaris Polska ® 2025</span>
     </div>
     """, unsafe_allow_html=True
 )
